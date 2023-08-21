@@ -1,0 +1,8 @@
+.vscode
+/build
+/dist
+*.DS_Store
+*.spec
+*.toml
+README.md
+__pycache__

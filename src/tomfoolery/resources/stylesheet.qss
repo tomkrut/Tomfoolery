@@ -1,0 +1,48 @@
+QMainWindow {
+    background-repeat: repeat-xy;
+	background-image: url('resources:64_smooth.png');	
+}
+QDialog {
+    background-repeat: repeat-xy;
+	background-image: url('resources:64_smooth.png');	
+}
+QMessageBox {
+    background-repeat: no-repeat;
+	background: white;	
+}
+QCheckBox#checkBoxArtistFolder {	
+	background-color: #F89BCF;	
+	border-radius: 5px;
+	border-width: 5px;
+	padding-right: 5px;
+    padding-left: 5px;
+}
+QCheckBox#checkBoxAlbumFolder {	
+	background-color: #F89BCF;	
+	border-radius: 5px;
+	border-width: 5px;
+	padding-right: 5px;
+    padding-left: 5px;
+}
+QLabel {	
+	background-color: #F89BCF;	
+	border-radius: 5px;
+	border-width: 5px;
+	padding-right: 5px;
+    padding-left: 5px;
+}
+QLabel#thumbnailLabel {	
+	background-color: #FFFFFF;	
+	border-radius: 5px;
+	border-width: 5px;
+	padding-right: 0px;
+    padding-left: 0px;	
+}
+QTableWidget::item {	
+	background-color: #FFFFFF;	
+}
+QTableWidget::item:selected {	
+	background-repeat: no-repeat;
+	background-image: none;
+	background: qlineargradient( x1:0, y1:1, x2:0, y2:0, stop:0 #F89BCF, stop:1 #FFFFFF );	
+}
