@@ -31,13 +31,15 @@ class TracklistUI(BaseUI):
             'Track nr.': [],
             'Title': [],
             'Artist': [],
+            'Album': []
         }
 
-        for item in self.scraper.metadata.get('trackinfo') :
-            labels['Track nr.'] += [str(item.get('track_num'))]
-            labels['Title'] += [str(item.get('title'))]
-            labels['Artist'] += [str(item.get('artist'))] 
-            
+        for item in self.scraper.metadata.get('trackinfo'):
+            labels['Track nr.'] += [str(item.get('track_num', '-'))]
+            labels['Title'] += [str(item.get('title', '-'))]
+            labels['Artist'] += [str(item.get('artist', '-'))]
+            labels['Album'] += [str(self.scraper.metadata.get('album_title', '-'))]
+
         return labels
         
     def tracklistUI(self):
@@ -125,9 +127,10 @@ class TracklistUI(BaseUI):
         hheader.setSectionResizeMode(0, QtWidgets.QHeaderView.ResizeMode.ResizeToContents)
         hheader.setSectionResizeMode(1, QtWidgets.QHeaderView.ResizeMode.Stretch)
         hheader.setSectionResizeMode(2, QtWidgets.QHeaderView.ResizeMode.ResizeToContents)
-        hheader.setSectionResizeMode(3, QtWidgets.QHeaderView.ResizeMode.Fixed)
+        hheader.setSectionResizeMode(3, QtWidgets.QHeaderView.ResizeMode.ResizeToContents)
         hheader.setSectionResizeMode(4, QtWidgets.QHeaderView.ResizeMode.Fixed)
-        hheader.setSectionResizeMode(5, QtWidgets.QHeaderView.ResizeMode.ResizeToContents)
+        hheader.setSectionResizeMode(5, QtWidgets.QHeaderView.ResizeMode.Fixed)
+        hheader.setSectionResizeMode(6, QtWidgets.QHeaderView.ResizeMode.ResizeToContents)
         tablewidget.verticalHeader().setSectionResizeMode(QtWidgets.QHeaderView.ResizeMode.ResizeToContents)   
         
         self.pushButtonDeselectAll.setDisabled(False)       

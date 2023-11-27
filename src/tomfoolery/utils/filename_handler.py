@@ -1,10 +1,11 @@
 #! /usr/bin/env python
 import re
 from os.path import join, exists
-from os import mkdir, rename
+from os import mkdir
 from pathlib import Path
 from pathvalidate import sanitize_filename
 from .scrape_common import console_output
+
 
 class FilenameHandler:
 
@@ -17,7 +18,7 @@ class FilenameHandler:
             album: str,
             metadata_entries: dict,
             man_metadata_entries: dict,         
-        ):
+    ):
         
         # config
         self.dir = dir
@@ -41,7 +42,6 @@ class FilenameHandler:
         if self.albumFolder:
             self.makeAlbumFolder()
 
-
     def getFilename(self, filename):
                
         # Check for manual metadata entries   
@@ -53,9 +53,12 @@ class FilenameHandler:
                     console_output(f"Changing artist to {self.artist}.")
                 elif entry.get('header') == 'Title':
                     self.metadata['title'] = self.title = entry.get('text')
-                    console_output(f"Changing title to {self.title}.")                 
+                    console_output(f"Changing title to {self.title}.")
+                elif entry.get('header') == 'Album':
+                    self.metadata['album_title'] = self.album = entry.get('text')
+                    console_output(f"Changing album to {self.album}.")
 
-        # format: <title>
+                    # format: <title>
         if self.albumFolder:
             stem = sanitize_filename(f'{self.title}')
             filename_new = str(Path(filename).with_stem(stem))
@@ -65,7 +68,6 @@ class FilenameHandler:
             filename_new = str(Path(filename).with_stem(stem))
 
         return filename_new
-       
 
     def makeArtistFolder(self):                 
      
@@ -76,7 +78,6 @@ class FilenameHandler:
             mkdir(directory)   
         # overwrite current directory  
         self.dir = directory     
-    
 
     def makeAlbumFolder(self):
 
@@ -91,7 +92,6 @@ class FilenameHandler:
         # overwrite current directory  
         self.dir = directory
 
-
     def getOutput(self):
 
         return {
@@ -99,6 +99,7 @@ class FilenameHandler:
             'title': self.title,
             'metadata': self.metadata,
             'dir': self.dir,
-            'filename': self.filename,       
+            'filename': self.filename,
+            'album': self.album
         }   
         

@@ -56,6 +56,7 @@ class SoundCloudException(Exception):
         if (idx := kwargs.get('idx')) is not None:      
             self.idx = idx
 
+
 class Soundcloud():
 
     def __init__(self, vargs=None, cfg=None):  
@@ -112,14 +113,14 @@ class Soundcloud():
             raise SoundCloudException("ffmpeg is not installed.")                   
 
         # Parse arguments
-        self.arguments = {}
+        self.arguments = {
+            "-l": self.vargs['artist_url'],
+            "--path": self.vargs['path'],
+            "-c": True,
+            "--no-playlist-folder": True
+        }
 
         # main arguments
-        self.arguments["-l"] = self.vargs['artist_url']  
-        self.arguments["--path"] = self.vargs['path']
-        self.arguments["-c"] = True
-        self.arguments["--no-playlist-folder"] = True
-
         if self.arguments.get("--debug"):
             logger.level = logging.DEBUG
         elif self.arguments.get("--error"):
@@ -226,6 +227,7 @@ class Soundcloud():
 ####### UTILITY #######
 #######################
 
+
 def get_playlist_info(playlist: BasicAlbumPlaylist, metadata: dict, **kwargs):
     
     metadata['artist'] = playlist.user.username
@@ -246,7 +248,8 @@ def get_playlist_info(playlist: BasicAlbumPlaylist, metadata: dict, **kwargs):
         )      
     finally:
         return metadata           
-    
+
+
 def get_track_info(track: BasicTrack, metadata: dict):
    
     ret = parse_title(track.title) 
@@ -264,6 +267,7 @@ def get_track_info(track: BasicTrack, metadata: dict):
     ) 
     return metadata    
 
+
 def parse_title(title):
 
     if '-' in title:
@@ -275,8 +279,9 @@ def parse_title(title):
                 "artist": match.group('artist'), 
                 "title": match.group('title')
             }    
-    return  {"title": title}
-      
+    return {"title": title}
+
+
 def validate_url(client: SoundCloud, url: str):
     """
     If url is a valid soundcloud.com url, return it.
@@ -325,9 +330,7 @@ def download_playlist(client: SoundCloud, playlist: BasicAlbumPlaylist, **kwargs
     if kwargs.get("no_playlist"):
         logger.info("Skipping playlist.")
         return
-    playlist_name = playlist.title.encode("utf-8", "ignore")
-    playlist_name = playlist_name.decode("utf-8")
-    playlist_name = sanitize_filename(playlist_name)
+
     playlist_info = {
                 "author": playlist.user.username,
                 "id": playlist.id,
@@ -368,6 +371,7 @@ def try_utime(path, filetime):
     except Exception:
         logger.error("Cannot update utime of file")
 
+
 def get_filename(track: BasicTrack, original_filename=None, aac=False, playlist_info=None, **kwargs):
     
     username = track.user.username
@@ -404,6 +408,7 @@ def get_filename(track: BasicTrack, original_filename=None, aac=False, playlist_
     filename = f'{artist} - {track.title}{ext}'
 
     return filename
+
 
 def fetch_original_file(track: BasicTrack, playlist_info: dict, client: SoundCloud, **kwargs):
 
@@ -554,6 +559,7 @@ def fetch_hls(track: BasicTrack, playlist_info: dict, **kwargs):
 
     return {'filename': filename, 'kwargs': kwargs}
 
+
 def download_hls(track: BasicTrack, filename: str, playlist_info: dict, client: SoundCloud, **kwargs):
     
     title = track.title   
@@ -589,7 +595,9 @@ def download_hls(track: BasicTrack, filename: str, playlist_info: dict, client: 
 def download_track(client: SoundCloud, track: BasicTrack, playlist_info=None, exit_on_fail=True, **kwargs):
     """
     Downloads a track
-    """      
+    """
+    mode = None
+
     try:
         idx = kwargs.get('track_number')
         title = track.title
@@ -637,8 +645,12 @@ def download_track(client: SoundCloud, track: BasicTrack, playlist_info=None, ex
             man_metadata_entries=kwargs.get('man_metadata_entries')          
         )              
         ret = fh.getOutput()        
-        filename, dir, metadata = ret.get('filename'), ret.get('dir'), ret.get('metadata')   
+        filename, dir, metadata = ret.get('filename'), ret.get('dir'), ret.get('metadata')
         track.title, track.user.username = ret.get('title'), ret.get('artist')
+        if hasattr(playlist_info, "title"):
+            playlist_info["title"] = ret.get('album')
+        else:
+            kwargs['album'] = ret.get('album')
             
         try:
             os.chdir(dir)
@@ -815,9 +827,10 @@ def set_metadata(track: BasicTrack, filename: str, playlist_info=None, **kwargs)
             if track.date:
                 mutagen_file["TDAT"] = mutagen.id3.TDAT(encoding=3, text=track.date)
             if playlist_info:
-                if not kwargs.get("no_album_tag"):
-                    mutagen_file["TALB"] = mutagen.id3.TALB(encoding=3, text=playlist_info["title"])
+                mutagen_file["TALB"] = mutagen.id3.TALB(encoding=3, text=playlist_info["title"])
                 mutagen_file["TRCK"] = mutagen.id3.TRCK(encoding=3, text=str(playlist_info["tracknumber"]))
+            else:
+                mutagen_file["TALB"] = kwargs.get('album')
             mutagen_file.save()
         else:
             mutagen_file.save()
@@ -831,22 +844,26 @@ def set_metadata(track: BasicTrack, filename: str, playlist_info=None, **kwargs)
             if track.date:
                 audio["date"] = track.date
             if playlist_info:
-                if not kwargs.get("no_album_tag"):
-                    audio["album"] = playlist_info["title"]
+                audio["album"] = playlist_info["title"]
                 audio["tracknumber"] = str(playlist_info["tracknumber"])
+            else:
+                mutagen_file["TALB"] = kwargs.get('album')
 
             audio.save()
+
 
 def limit_filename_length(name: str, ext: str, max_bytes=255):
     while len(name.encode("utf-8")) + len(ext.encode("utf-8")) > max_bytes:
         name = name[:-1]
     return name + ext
 
+
 def is_ffmpeg_available():
     """
     Returns true if ffmpeg is available in the operating system
     """
     return shutil.which("ffmpeg") is not None
+
 
 def size_in_bytes(insize):
     """

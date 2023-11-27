@@ -26,7 +26,7 @@ ffmpeg = shutil.which('ffmpeg')
 if not ffmpeg: 
     raise Exception("ffmpeg is not installed.")
 os.environ["IMAGEIO_FFMPEG_EXE"] = ffmpeg
-from moviepy.editor import  VideoFileClip
+from moviepy.editor import VideoFileClip
 
 
 class Youtube():
@@ -110,7 +110,6 @@ class Youtube():
             except VideoUnavailable:
                 raise YoutubeException(f'Video {url} is unavailable, skipping.')
 
-        
     def generate_trackinfo(self, **kwargs):
 
         self.pytube_init(self.url)
@@ -165,7 +164,9 @@ class Youtube():
 
     def execute(self, **kwargs):        
       
-        for idx, vid in enumerate(self.videos):            
+        for idx, vid in enumerate(self.videos):
+
+            file = None
       
             if not self.metadata['trackinfo'][idx].get('download_enabled'):                   
                 continue
@@ -188,7 +189,7 @@ class Youtube():
             fh = FilenameHandler(              
                 dir=self.download_path, 
                 cfg=self.cfg,                 
-                filename=self.filename,
+                filename=str(self.filename),
                 track_number=idx,
                 album=self.playlist_title,
                 metadata_entries = self.metadata['trackinfo'][idx],
@@ -196,8 +197,9 @@ class Youtube():
             )              
             ret = fh.getOutput()
             self.filename, self.download_path, metadata = ret.get('filename'), ret.get('dir'), ret.get('metadata') 
-            title = ret.get('title')  
-         
+            title = ret.get('title')
+            self.playlist_title = ret.get('album')
+
             if os.path.isfile(self.filename):
                 stem = Path(self.filename).stem
                 emit_signal(kwargs, 'messagebox_set', [idx, f'Track already downloaded: "{stem}".'])    
@@ -248,7 +250,6 @@ class Youtube():
 
             emit_signal(kwargs, 'checkbox_set', [idx, False])   
 
-
     def add_tags(self, metadata=None):          
 
         root = Path(self.download_path)        
@@ -277,8 +278,7 @@ class Youtube():
             os.rename(temp_audio_path, self.filename)  
         except OSError:
             raise YoutubeException('Could not remove temp file.') 
-                     
-    
+
     def embed_art(self, thumbnail_url):
         
         root = Path(self.download_path)
@@ -296,8 +296,7 @@ class Youtube():
         except requests.exceptions.TooManyRedirects:
             raise YoutubeException(e) 
         except requests.exceptions.RequestException as e:
-            raise YoutubeException(e) 
-            raise SystemExit(e)
+            raise YoutubeException(e)
         
         with open(temp_cover_path, 'wb') as f:
             f.write(r.content)

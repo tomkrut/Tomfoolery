@@ -11,7 +11,7 @@ from tomfoolery.scrapers import (
     Soundcloud, 
     Youtube
 )
-from tomfoolery.ui import ( 
+from tomfoolery.ui import (
     ConsoleUI,
     TracklistUI, 
     TomfooleryDirs,
@@ -28,7 +28,6 @@ from tomfoolery.utils import (
     MetadataHandler,
     UnavailableTracksHandler
 )
-
 
 if getattr(sys, 'frozen', False):
     application_path = sys._MEIPASS
@@ -47,8 +46,8 @@ class MainUI(ConsoleUI, TracklistUI, MetadataHandler,
         self.res = join(application_path, 'resources') 
         QDir.addSearchPath('resources', self.res)       
 
-        appname = 'Tomfoolery'          
-        self.config_dir = user_config_dir(appname, appauthor=False)  
+        app_name = 'Tomfoolery'
+        self.config_dir = user_config_dir(app_name, appauthor=False)
         # download directories       
         self.ssd = TomfooleryDirs(self.config_dir) 
         # config
@@ -73,7 +72,6 @@ class MainUI(ConsoleUI, TracklistUI, MetadataHandler,
               
         self.connectSignalsSlots()                    
 
-
     def connectSignalsSlots(self):
 
         self.action_Directories.triggered.connect(self.setDirs) 
@@ -87,12 +85,10 @@ class MainUI(ConsoleUI, TracklistUI, MetadataHandler,
         self.pushButtonSelectAll.clicked.connect(self.selectAll)
         self.tableWidget.cellEditingStarted.connect(self.metadata_init) 
         self.tableWidget.itemChanged.connect(self.metadata_changed)             
- 
 
     def handleError(self, error):
 
         QtWidgets.QMessageBox.about(self, "Error", str(error))           
-
 
     def setDirs(self):
 
@@ -101,20 +97,17 @@ class MainUI(ConsoleUI, TracklistUI, MetadataHandler,
         # overwrite dirs config with the new values
         self.ssd = dialog.ssd
 
-
     def setConfig(self):
         
         dialog = ConfigDialogUI(self.cfg, self.res)
         dialog.exec()
         # overwrite misc config with the new values
         self.cfg = dialog.cfg
- 
 
     def clearUI(self):
 
         self.clearUIContent()  
         self.resetThumbnail(self.thumbnailLabel)       
-
 
     def getURL(self):       
       
@@ -134,7 +127,6 @@ class MainUI(ConsoleUI, TracklistUI, MetadataHandler,
         self.com.append_word_bank(txt)
         self.com.pickle_word_bank()        
 
-
     def getConfig(self):           
 
         dirs = {
@@ -149,10 +141,9 @@ class MainUI(ConsoleUI, TracklistUI, MetadataHandler,
 
         if self.vargs['path'] is None:
             raise Exception('Please provide the download directory path (Menu "File -> Directories").')     
-  
-           
-    def initScraper(self):
 
+    def initScraper(self):
+     
         try:                    
             self.getURL()
             # re-initialize completer (update word bank)
@@ -181,7 +172,6 @@ class MainUI(ConsoleUI, TracklistUI, MetadataHandler,
         worker.signals.worker_finished.connect(lambda x=self.thumbnailLabel: self.getThumbnail(x))
   
         self.pool.start(worker)                
-
 
     def execScraper(self):
 

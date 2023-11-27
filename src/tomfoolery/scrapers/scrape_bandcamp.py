@@ -5,14 +5,11 @@ import re
 import requests
 import sys
 import os
-from pathlib import Path
 from datetime import datetime
 from mutagen.mp3 import MP3, EasyMP3
 from mutagen.id3 import APIC, WXXX
 from mutagen.id3 import ID3 as OldID3
-from subprocess import Popen, PIPE
 from os.path import exists, join
-from os import W_OK
 
 from tomfoolery.utils import (
     console_output, 
@@ -25,13 +22,14 @@ if sys.version_info.minor < 4:
 else:
     html_unescape = html.unescape
 
+
 class BandcampException(Exception):
-    def __init__(self, message, **kwargs):  
+    def __init__(self, message, **kwargs):
        
         super().__init__(message)
 
-        if (exists := kwargs.get('exists')) is not None:      
-            self.exists = exists
+        if (ex := kwargs.get('exists')) is not None:
+            self.exists = ex
 
         if (idx := kwargs.get('idx')) is not None:      
             self.idx = idx
@@ -40,26 +38,31 @@ class BandcampException(Exception):
 # Bandcamp
 ####################################################################
 
+
 class Bandcamp():
 
     def __init__(self, vargs, cfg):
-        
-        self.vargs = vargs  
+
+        self.vargs = vargs
         self.cfg = cfg              
 
         artist_url = self.vargs['artist_url']
         if 'bandcamp.com' in artist_url or ('://' in artist_url and self.vargs['bandcamp']):
             self.bc_url = artist_url
         else:
-            self.bc_url = 'https://' + artist_url + '.bandcamp.com/music'        
+            self.bc_url = 'https://' + artist_url + '.bandcamp.com/music'
+
+        self.thumbnail_url = None
+        self.metadata = None
               
     def generate_trackinfo(self, **kwargs):  
-      
+
         """
         Read information from Bandcamp embedded JavaScript object notation.
         The method may return a list of URLs (indicating this is probably a "main" page which links to one or more albums),
         or a JSON if we can already parse album/track info from the given url.
         """    
+       
         request = requests.get(self.bc_url)
         output = {}
         try:
@@ -94,11 +97,11 @@ class Bandcamp():
         except:
             console_output("Couldn't get full artwork.")
             output['artFullsizeUrl'] = None
-        
-        # fix artist metadata & mark tracks with attribute 'is_downloadable' 
+    
+        # add missing metadata & mark tracks with attribute 'is_downloadable'
         for idx, track in enumerate(output.get('trackinfo')):            
             if track.get('artist') is None:
-                track['artist'] = output.get('artist')   
+                track['artist'] = output.get('artist')
             if track.get('is_downloadable') is None:
                 emit_signal(kwargs, 'unavailable_for_scraping', [idx]) 
 
@@ -106,7 +109,7 @@ class Bandcamp():
         self.thumbnail_url = output.get('artFullsizeUrl')  
        
         # save metadata
-        self.metadata = output        
+        self.metadata = output
 
     def extract_embedded_json_from_attribute(self, request, attribute, debug=False):
         """
@@ -143,18 +146,13 @@ class Bandcamp():
             if debug:
                 print(e)
         return output
-       
 
     def execute(self, **kwargs):
-
-        filenames = self.scrape_bandcamp_url(   
+    
+        self.scrape_bandcamp_url(
             custom_path=self.vargs['path'],
             **kwargs
         )
-
-        if any(isinstance(elem, list) for elem in filenames):        
-            filenames = [sub for sub in filenames if sub]        
-            filenames = [val for sub in filenames for val in sub]  
 
     def scrape_bandcamp_url(self, custom_path='', **kwargs):      
         """
@@ -165,17 +163,16 @@ class Bandcamp():
         """    
 
         filenames = []
-        album_data = self.metadata
 
-        artist = album_data.get("artist")
-        album_name = album_data.get("album")
+        artist = self.metadata.get("artist")
+        album_name = self.metadata.get("album_title")
             
-        if len(album_data["trackinfo"]) > 1:
+        if len(self.metadata["trackinfo"]) > 1:
             console_output("Found a playlist.")  
         else: 
             console_output("Found a track.")  
 
-        for idx, track in enumerate(album_data["trackinfo"]):
+        for idx, track in enumerate(self.metadata["trackinfo"]):
                        
             if not track['download_enabled']:
                 continue 
@@ -191,12 +188,12 @@ class Bandcamp():
                 cfg=self.cfg,                 
                 filename=filename,
                 track_number=idx,
-                album=album_data.get("album_title") ,
-                metadata_entries = self.metadata['trackinfo'][idx],
+                album=album_name,
+                metadata_entries=self.metadata['trackinfo'][idx],
                 man_metadata_entries=self.vargs.get('man_metadata_entries')                
             )              
             ret = fh.getOutput()
-            filename, path =  ret.get('filename'), ret.get('dir')
+            filename, path, album_name = ret.get('filename'), ret.get('dir'), ret.get('album')
             title = ret.get('title')   
 
             if exists(filename):
@@ -217,7 +214,7 @@ class Bandcamp():
             emit_signal(kwargs, 'messagebox_set', [idx, 'Setting tags...'])                   
             emit_signal(kwargs, 'resize_window')   
 
-            album_year = album_data['album_release_date']
+            album_year = self.metadata['album_release_date']
             if album_year:
                 album_year = datetime.strptime(album_year, "%d %b %Y %H:%M:%S GMT").year    
 
@@ -233,10 +230,10 @@ class Bandcamp():
                         title=title,
                         album=album_name,
                         year=album_year,
-                        genre=album_data['genre'],
-                        artwork_url=album_data['artFullsizeUrl'],
+                        genre=self.metadata['genre'],
+                        artwork_url=self.metadata['artFullsizeUrl'],
                         track_number=track_number,
-                        url=album_data['url']                                            
+                        url=self.metadata['url']
                 )                  
             except Exception as e:
                 raise BandcampException(f'Problem tagging "{title}".')                              
@@ -269,35 +266,35 @@ class Bandcamp():
         
         chunk_size = 1024
         total_length = int(r.headers.get('content-length', 0)) 
-        pbar_max = int((total_length / chunk_size) + 1)
-        emit_signal(kwargs, 'progress_init', [track_idx, pbar_max])  
+        p_bar_max = int((total_length / chunk_size) + 1)
+        emit_signal(kwargs, 'progress_init', [track_idx, p_bar_max])
         
-        pbar_current_val = 0
+        p_bar_current_val = 0
         with open(tmp_path, 'wb') as f:            
             for chunk in r.iter_content(chunk_size=chunk_size):            
                 if chunk:  # filter out keep-alive new chunks           
-                    pbar_current_val += 1
-                    emit_signal(kwargs, 'progress_set', [track_idx, pbar_current_val])  
+                    p_bar_current_val += 1
+                    emit_signal(kwargs, 'progress_set', [track_idx, p_bar_current_val])
                     f.write(chunk)
                     f.flush()
 
-        if pbar_current_val < pbar_max:
+        if p_bar_current_val < p_bar_max:
             raise BandcampException("Connection closed prematurely, download incomplete.", idx=track_idx) 
         try:
             os.rename(tmp_path, filename)   
         except OSError:
             raise BandcampException('Could not rename temp file.')      
 
+    @staticmethod
     def tag_file(
-            self,
-            filename=None, artist=None, title=None, 
+            filename=None, artist=None, title=None,
             year=None, genre=None, artwork_url=None, 
             album=None, track_number=None, url=None            
-        ):
+    ):
         """
         Attempt to put ID3 tags on a file.
        
-        """                   
+        """
         
         try:                           
             audio = EasyMP3(filename)

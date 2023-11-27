@@ -39,7 +39,7 @@ tomfoolery
 
 ### Metadata editing
 
-*Artist* / *Title* can be edited by double-clicking a corresponding entry.  
+*Artist* / *Title* / *Album* can be edited by double-clicking a corresponding entry.  
 The change will reflect both in the filename and in the file metadata.
 
 ## Acknowledgements
