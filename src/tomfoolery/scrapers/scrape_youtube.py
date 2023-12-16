@@ -111,7 +111,7 @@ class Youtube():
                 raise YoutubeException(f'Video {url} is unavailable, skipping.')
 
     def generate_trackinfo(self, **kwargs):
-
+  
         self.pytube_init(self.url)
         try:
             self.thumbnail_url = self.videos[0].thumbnail_url 
@@ -120,11 +120,14 @@ class Youtube():
 
         self.metadata['trackinfo'] = []
         
-        for idx, vid in enumerate(self.videos):                
+        for idx, vid in enumerate(self.videos):     
+
+            vid.title = vid.title.encode('ascii', 'ignore')   
+            vid.title = vid.title.decode()    
 
             if '-' in vid.title:   
 
-                pattern_text = r'(?P<artist>.*)(\s+-\s+)(?P<title>.*)'
+                pattern_text = r'(?P<artist>.*)(\s+\-?\s+)(?P<title>.*)'
                 pattern = re.compile(pattern_text)
                 match = pattern.match(vid.title)
                 if match:
@@ -147,12 +150,12 @@ class Youtube():
                 match = pattern.match(vid.title)
                 if match:
                     artist = match.group('artist')
-                    title = match.group('title') 
+                    title = match.group('title')                 
 
-            else:
+            if not artist or not title:
 
                 artist = vid.author
-                title = vid.title
+                title = vid.title        
                  
             self.metadata['trackinfo'].append(
                 {    
@@ -202,7 +205,7 @@ class Youtube():
 
             if os.path.isfile(self.filename):
                 stem = Path(self.filename).stem
-                emit_signal(kwargs, 'messagebox_set', [idx, f'Track already downloaded: "{stem}".'])    
+                emit_signal(kwargs, 'messagebox_set', [idx, f'Track already downloaded.'])    
                 continue
             else: 
                 emit_signal(kwargs, 'messagebox_set', [idx, 'Downloading...']) 
@@ -244,7 +247,7 @@ class Youtube():
                     
             self.add_tags(metadata)   
             
-            emit_signal(kwargs, 'messagebox_set', [idx, f'Downloaded {title}.'])  
+            emit_signal(kwargs, 'messagebox_set', [idx, f'Downloaded.'])  
             emit_signal(kwargs, 'progress_set', [idx, 100])            
             emit_signal(kwargs, 'resize_window')  
 

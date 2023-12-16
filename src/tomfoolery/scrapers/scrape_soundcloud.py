@@ -666,7 +666,7 @@ def download_track(client: SoundCloud, track: BasicTrack, playlist_info=None, ex
             raise ValueError('Value error, expected "hls" or "original_file".')
         
         if is_already_downloaded:
-            emit_signal(kwargs, 'messagebox_set', [idx, f'Track already downloaded: "{filename}".'])                        
+            emit_signal(kwargs, 'messagebox_set', [idx, f'Track already downloaded.'])                        
             return               
         
         if kwargs.get("remove"):
@@ -704,7 +704,7 @@ def download_track(client: SoundCloud, track: BasicTrack, playlist_info=None, ex
         
         logger.info(f"'{filename}' downloaded.")      
 
-        emit_signal(kwargs, 'messagebox_set', [kwargs.get('track_number'), f'Downloaded "{track.title}".'])   
+        emit_signal(kwargs, 'messagebox_set', [kwargs.get('track_number'), f'Downloaded.'])   
         emit_signal(kwargs, 'resize_window') 
 
     except SoundCloudException as err:

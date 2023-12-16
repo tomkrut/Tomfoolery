@@ -197,7 +197,7 @@ class Bandcamp():
             title = ret.get('title')   
 
             if exists(filename):
-                emit_signal(kwargs, 'messagebox_set', [idx, f'Track already downloaded: "{title}".']) 
+                emit_signal(kwargs, 'messagebox_set', [idx, f'Track already downloaded.']) 
                 emit_signal(kwargs, 'resize_window')             
                 continue
 
@@ -240,7 +240,7 @@ class Bandcamp():
                                                                                 
             filenames.append(filename)
             
-            emit_signal(kwargs, 'messagebox_set', [idx, f'Downloaded "{ret.get("title", title)}".'])                 
+            emit_signal(kwargs, 'messagebox_set', [idx, f'Downloaded.'])                 
             emit_signal(kwargs, 'checkbox_set', [idx, False])       
             emit_signal(kwargs, 'resize_window')                
              
