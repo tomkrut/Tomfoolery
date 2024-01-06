@@ -50,13 +50,13 @@ class FilenameHandler:
             for entry in man_metadata_track:      
                 if entry.get('header') == 'Artist':
                     self.metadata['artist'] = self.artist = entry.get('text')
-                    console_output(f"Changing artist to {self.artist}.")
+                    console_output(f'Changing artist to "{self.artist}".')
                 elif entry.get('header') == 'Title':
                     self.metadata['title'] = self.title = entry.get('text')
-                    console_output(f"Changing title to {self.title}.")
+                    console_output(f'Changing title to "{self.title}".')
                 elif entry.get('header') == 'Album':
                     self.metadata['album_title'] = self.album = entry.get('text')
-                    console_output(f"Changing album to {self.album}.")
+                    console_output(f'Changing album to "{self.album}".')        
 
                     # format: <title>
         if self.albumFolder:

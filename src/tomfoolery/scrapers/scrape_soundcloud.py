@@ -231,7 +231,7 @@ class Soundcloud():
 def get_playlist_info(playlist: BasicAlbumPlaylist, metadata: dict, **kwargs):
     
     metadata['artist'] = playlist.user.username
-    metadata['album'] = playlist.title
+    metadata['album_title'] = playlist.title
     try:            
         for idx, track in itertools.islice(enumerate(playlist.tracks, 1), 0, None):
 
@@ -256,7 +256,7 @@ def get_track_info(track: BasicTrack, metadata: dict):
     title = ret.get("title") 
     artist = ret.get("artist", track.user.username)
 
-    metadata['album'] = title + ' (Single)'
+    metadata['album_title'] = title + ' (Single)'
     metadata['artist'] = artist    
     metadata['trackinfo'].append(
         {    
@@ -599,7 +599,7 @@ def download_track(client: SoundCloud, track: BasicTrack, playlist_info=None, ex
     mode = None
 
     try:
-        idx = kwargs.get('track_number')
+        idx = kwargs.get('track_number') - 1
         title = track.title
         title = title.encode("utf-8", "ignore").decode("utf-8")   
 
@@ -639,7 +639,7 @@ def download_track(client: SoundCloud, track: BasicTrack, playlist_info=None, ex
             dir=kwargs.get('path'), 
             cfg=kwargs.get('cfg'),         
             filename=filename,
-            track_number=idx,
+            track_number=idx+1,
             album=metadata.get('album'),
             metadata_entries=metadata['trackinfo'][idx],
             man_metadata_entries=kwargs.get('man_metadata_entries')          
@@ -704,7 +704,7 @@ def download_track(client: SoundCloud, track: BasicTrack, playlist_info=None, ex
         
         logger.info(f"'{filename}' downloaded.")      
 
-        emit_signal(kwargs, 'messagebox_set', [kwargs.get('track_number'), f'Downloaded.'])   
+        emit_signal(kwargs, 'messagebox_set', [idx, f'Downloaded.\\Downloaded "{track.title}".'])   
         emit_signal(kwargs, 'resize_window') 
 
     except SoundCloudException as err:

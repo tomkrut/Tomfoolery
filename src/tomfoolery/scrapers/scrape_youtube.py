@@ -13,7 +13,6 @@ from tomfoolery.utils import (
     emit_signal, 
     FilenameHandler
 )
-
 class YoutubeException(Exception):
     def __init__(self, message, **kwargs):  
 
@@ -111,7 +110,7 @@ class Youtube():
                 raise YoutubeException(f'Video {url} is unavailable, skipping.')
 
     def generate_trackinfo(self, **kwargs):
-  
+
         self.pytube_init(self.url)
         try:
             self.thumbnail_url = self.videos[0].thumbnail_url 
@@ -119,8 +118,12 @@ class Youtube():
             raise YoutubeException('Found no video, check URL.') 
 
         self.metadata['trackinfo'] = []
+
+        self.metadata['album_title'] = self.playlist_title
         
         for idx, vid in enumerate(self.videos):     
+
+            artist, title = None, None   
 
             vid.title = vid.title.encode('ascii', 'ignore')   
             vid.title = vid.title.decode()    
@@ -152,9 +155,10 @@ class Youtube():
                     artist = match.group('artist')
                     title = match.group('title')                 
 
-            if not artist or not title:
-
+            if not artist:
                 artist = vid.author
+
+            if not title:
                 title = vid.title        
                  
             self.metadata['trackinfo'].append(
@@ -166,7 +170,7 @@ class Youtube():
             )     
 
     def execute(self, **kwargs):        
-      
+     
         for idx, vid in enumerate(self.videos):
 
             file = None
@@ -203,9 +207,9 @@ class Youtube():
             title = ret.get('title')
             self.playlist_title = ret.get('album')
 
-            if os.path.isfile(self.filename):
-                stem = Path(self.filename).stem
-                emit_signal(kwargs, 'messagebox_set', [idx, f'Track already downloaded.'])    
+            if os.path.isfile(self.filename):                
+                emit_signal(kwargs, 'messagebox_set', [idx, 'Track already downloaded.'])    
+                emit_signal(kwargs, 'resize_window')  
                 continue
             else: 
                 emit_signal(kwargs, 'messagebox_set', [idx, 'Downloading...']) 
@@ -247,14 +251,14 @@ class Youtube():
                     
             self.add_tags(metadata)   
             
-            emit_signal(kwargs, 'messagebox_set', [idx, f'Downloaded.'])  
+            emit_signal(kwargs, 'messagebox_set', [idx, f'Downloaded.\Downloaded "{title}".'])  
             emit_signal(kwargs, 'progress_set', [idx, 100])            
             emit_signal(kwargs, 'resize_window')  
 
             emit_signal(kwargs, 'checkbox_set', [idx, False])   
 
     def add_tags(self, metadata=None):          
-
+    
         root = Path(self.download_path)        
         temp_audio_path = root.joinpath('temp.mp3')                 
        

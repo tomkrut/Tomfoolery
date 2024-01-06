@@ -1,8 +1,8 @@
 #! /usr/bin/env python
+from PyQt6 import QtCore
 from PyQt6.QtCore import QRunnable, QObject, pyqtSlot, pyqtSignal
 from .scrape_common import console_output
 import textwrap
-
 
 def emit_signal(kwargs, signal, args=[]):
   
@@ -36,13 +36,18 @@ class WorkerSlots:
     def checkBoxSet(self, idx, state):
 
         self.checkboxes[idx].setChecked(state)
-   
+    
     def messageBoxSet(self, idx, txt):
-
+            
+        longtxt = None
+        if '\\' in txt:
+            txt, longtxt = txt.split('\\')        
+        if longtxt is not None:
+            console_output(longtxt)
+        else:   
+            console_output(txt)        
         wrapped_txt = ('\n').join(textwrap.wrap(txt, 40))
-        self.messageboxes[idx].setText(wrapped_txt)
-        console_output(txt)
-
+        self.messageboxes[idx].setText(wrapped_txt)               
 
 class initWorkerSignals(QObject):
     '''

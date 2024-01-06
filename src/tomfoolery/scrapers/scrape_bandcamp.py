@@ -240,7 +240,7 @@ class Bandcamp():
                                                                                 
             filenames.append(filename)
             
-            emit_signal(kwargs, 'messagebox_set', [idx, f'Downloaded.'])                 
+            emit_signal(kwargs, 'messagebox_set', [idx, f'Downloaded.\\Downloaded "{ret.get("title", title)}".'])                 
             emit_signal(kwargs, 'checkbox_set', [idx, False])       
             emit_signal(kwargs, 'resize_window')                
              
