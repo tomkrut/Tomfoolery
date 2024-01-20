@@ -143,6 +143,8 @@ class MainUI(ConsoleUI, TracklistUI, MetadataHandler,
             raise Exception('Please provide the download directory path (Menu "File -> Directories").')     
 
     def initScraper(self):
+
+        UnavailableTracksHandler.__init__(self)
      
         try:                    
             self.getURL()
