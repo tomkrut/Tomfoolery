@@ -25,12 +25,12 @@ class FilenameHandler:
         self.cfg = cfg
 
         # metadata        
-        self.metadata = metadata_entries
-        self.artist = metadata_entries.get('artist')
-        self.title = metadata_entries.get('title')
-        self.album = album if album is not None else metadata_entries.get('title')
-        self.track_number = track_number        
+        self.metadata = metadata_entries  
         self.man_metadata_entries = man_metadata_entries 
+
+        if album is None:
+            self.metadata['album'] = self.metadata.get('title')
+        self.track_number = track_number    
 
         self.albumFolder = self.cfg.vargs.get('albumFolder')
         self.artistFolder = self.cfg.vargs.get('artistFolder')  
@@ -48,58 +48,57 @@ class FilenameHandler:
         if self.man_metadata_entries is not None:             
             man_metadata_track = [v for k, v in self.man_metadata_entries.items() if k[0] == self.track_number]
             for entry in man_metadata_track:      
-                if entry.get('header') == 'Artist':
-                    self.metadata['artist'] = self.artist = entry.get('text')
-                    console_output(f'Changing artist to "{self.artist}".')
+                if entry.get('header') == 'Artist':              
+                    if self.metadata['artist'] != entry.get('text'):
+                        console_output(f'Changing artist to "{entry.get("text")}".')
+                    self.metadata['artist'] = entry.get('text')
                 elif entry.get('header') == 'Title':
-                    self.metadata['title'] = self.title = entry.get('text')
-                    console_output(f'Changing title to "{self.title}".')
+                    if self.metadata['title'] != entry.get('text'):
+                        console_output(f'Changing title to "{entry.get("text")}".')
+                    self.metadata['title'] = entry.get('text')
                 elif entry.get('header') == 'Album':
-                    self.metadata['album_title'] = self.album = entry.get('text')
-                    console_output(f'Changing album to "{self.album}".')        
-
-                    # format: <title>
+                    if self.metadata['album'] != entry.get('text'):
+                        console_output(f'Changing album to "{entry.get("text")}".')
+                    self.metadata['album'] = entry.get('text')     
+                
+                    
         if self.albumFolder:
-            stem = sanitize_filename(f'{self.title}')
+            stem = sanitize_filename(f'{self.metadata["title"]}')
             filename_new = str(Path(filename).with_stem(stem))
         # format: <artist - title>
         else: 
-            stem = sanitize_filename(f'{self.artist} - {self.title}')
+            stem = sanitize_filename(f'{self.metadata["artist"]} - {self.metadata["title"]}')
             filename_new = str(Path(filename).with_stem(stem))
 
         return filename_new
 
     def makeArtistFolder(self):                 
      
-        directory = self.artist
+        directory = self.metadata['artist']
         directory = sanitize_filename(directory)
-        directory = join(self.dir, directory)
-        if not exists(directory):
-            mkdir(directory)   
-        # overwrite current directory  
-        self.dir = directory     
+        self.dir = join(self.dir, directory)
+        if not exists(self.dir):
+            mkdir(self.dir)      
 
     def makeAlbumFolder(self):
 
         if self.artistFolder:         
-            directory = self.album
+            directory = self.metadata['album']
         else:
-            directory = self.artist + " - " + self.title
+            directory = self.metadata['artist'] + " - " + self.metadata['title']
         directory = sanitize_filename(directory)
-        directory = join(self.dir, directory)
-        if not exists(directory):
-            mkdir(directory)   
-        # overwrite current directory  
-        self.dir = directory
+        self.dir = join(self.dir, directory)
+        if not exists(self.dir):
+            mkdir(self.dir)   
 
     def getOutput(self):
 
         return {
-            'artist': self.artist,
-            'title': self.title,
+            'artist': self.metadata['artist'],
+            'title': self.metadata['title'],
             'metadata': self.metadata,
             'dir': self.dir,
             'filename': self.filename,
-            'album': self.album
+            'album': self.metadata['album']
         }   
         
