@@ -28,8 +28,8 @@ class FilenameHandler:
         self.metadata = metadata_entries  
         self.man_metadata_entries = man_metadata_entries 
 
-        if album is None:
-            self.metadata['album'] = self.metadata.get('title')
+        self.metadata['album'] = self.metadata.get('title') if album is None else album
+
         self.track_number = track_number    
 
         self.albumFolder = self.cfg.vargs.get('albumFolder')
@@ -45,23 +45,22 @@ class FilenameHandler:
     def getFilename(self, filename):
                
         # Check for manual metadata entries   
-        if self.man_metadata_entries is not None:             
+        if self.man_metadata_entries is not None:
             man_metadata_track = [v for k, v in self.man_metadata_entries.items() if k[0] == self.track_number]
             for entry in man_metadata_track:      
-                if entry.get('header') == 'Artist':              
-                    if self.metadata['artist'] != entry.get('text'):
+                if entry.get('header') == 'Artist':
+                    if self.metadata.get('artist') and self.metadata['artist'] != entry.get('text'):
                         console_output(f'Changing artist to "{entry.get("text")}".')
-                    self.metadata['artist'] = entry.get('text')
+                        self.metadata['artist'] = entry.get('text')
                 elif entry.get('header') == 'Title':
-                    if self.metadata['title'] != entry.get('text'):
+                    if self.metadata.get('title') and self.metadata['title'] != entry.get('text'):
                         console_output(f'Changing title to "{entry.get("text")}".')
-                    self.metadata['title'] = entry.get('text')
+                        self.metadata['title'] = entry.get('text')
                 elif entry.get('header') == 'Album':
-                    if self.metadata['album'] != entry.get('text'):
+                    if self.metadata.get('album') and self.metadata['album'] != entry.get('text'):
                         console_output(f'Changing album to "{entry.get("text")}".')
-                    self.metadata['album'] = entry.get('text')     
-                
-                    
+                        self.metadata['album'] = entry.get('text')
+
         if self.albumFolder:
             stem = sanitize_filename(f'{self.metadata["title"]}')
             filename_new = str(Path(filename).with_stem(stem))

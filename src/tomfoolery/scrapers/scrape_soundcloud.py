@@ -256,7 +256,7 @@ def get_track_info(track: BasicTrack, metadata: dict):
     title = ret.get("title") 
     artist = ret.get("artist", track.user.username)
 
-    metadata['album_title'] = title + ' (Single)'
+    metadata['album_title'] = title
     metadata['artist'] = artist    
     metadata['trackinfo'].append(
         {    
@@ -645,7 +645,7 @@ def download_track(client: SoundCloud, track: BasicTrack, playlist_info=None, ex
             man_metadata_entries=kwargs.get('man_metadata_entries')          
         )              
         ret = fh.getOutput()        
-        filename, dir, metadata = ret.get('filename'), ret.get('dir'), ret.get('metadata')
+        filename, path, metadata = ret.get('filename'), ret.get('dir'), ret.get('metadata')
         track.title, track.user.username = ret.get('title'), ret.get('artist')
         if hasattr(playlist_info, "title"):
             playlist_info["title"] = ret.get('album')
@@ -653,7 +653,7 @@ def download_track(client: SoundCloud, track: BasicTrack, playlist_info=None, ex
             kwargs['album'] = ret.get('album')
             
         try:
-            os.chdir(dir)
+            os.chdir(path)
         except OSError:
             raise SoundCloudException('"os.chdir" failed.')
         logger.debug("Downloading to " + os.getcwd() + ".")  
@@ -689,7 +689,8 @@ def download_track(client: SoundCloud, track: BasicTrack, playlist_info=None, ex
         ):
             try:          
                 set_metadata(track, filename, playlist_info, **kwargs)
-            except Exception:
+            except Exception as e:
+                print(str(e))
                 try:
                     os.remove(filename)   
                 except OSError:
@@ -847,8 +848,11 @@ def set_metadata(track: BasicTrack, filename: str, playlist_info=None, **kwargs)
                 audio["album"] = playlist_info["title"]
                 audio["tracknumber"] = str(playlist_info["tracknumber"])
             else:
-                mutagen_file["TALB"] = kwargs.get('album')
-
+                audio["album"] = kwargs.get('album')
+                if (metadata := kwargs.get('metadata')):
+                    if (trackinfo := metadata.get('trackinfo')):
+                        if trackinfo:
+                            audio["tracknumber"] = str(trackinfo[0].get('track_num'))
             audio.save()
 
 
